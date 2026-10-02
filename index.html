@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>消息日历 · 2025.07.14 起</title>
+<style>
+  :root {
+    --bg: #f1f5f9;
+    --card: #ffffff;
+    --primary: #6366f1;
+    --primary-soft: #eef2ff;
+    --primary-border: #c7d2fe;
+    --text: #1e293b;
+    --muted: #94a3b8;
+    --border: #e2e8f0;
+    --accent: #f59e0b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px 16px 48px;
+    min-height: 100vh;
+  }
+
+  .app { max-width: 1180px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+
+  h1 .sub {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0;
+  }
+
+  .nav { display: flex; align-items: center; gap: 8px; }
+
+  .nav button {
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+
+  .nav button:hover:not(:disabled) {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .nav button:disabled { opacity: .4; cursor: not-allowed; }
+
+  #monthLabel {
+    font-size: 16px;
+    font-weight: 600;
+    min-width: 120px;
+    text-align: center;
+  }
+
+  main {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* ---------- 日历 ---------- */
+  .calendar {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05),
+                0 10px 30px -10px rgba(15,23,42,.1);
+  }
+
+  .weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .weekdays div {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 6px 0;
+  }
+
+  .weekdays div:nth-last-child(-n+2) { color: #f87171; }
+
+  .days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+  }
+
+  .day {
+    aspect-ratio: 1 / 1;
+    border-radius: 10px;
+    padding: 6px;
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all .15s;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid transparent;
+  }
+
+  .day:hover:not(.empty):not(.disabled) {
+    background: #f1f5f9;
+    border-color: var(--border);
+  }
+
+  .day.empty { background: transparent; cursor: default; }
+
+  .day.disabled {
+    opacity: .3;
+    cursor: not-allowed;
+    background: transparent;
+  }
+
+  .day.has-data {
+    background: var(--primary-soft);
+    border-color: var(--primary-border);
+  }
+
+  .day.has-data:hover {
+    background: #e0e7ff;
+    border-color: var(--primary);
+  }
+
+  .day.selected {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(99,102,241,.25);
+  }
+
+  .day.today .day-num {
+    background: var(--primary);
+    color: #fff;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin-top: -1px;
+  }
+
+  .day-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .day-num { font-size: 13px; font-weight: 600; line-height: 1; padding: 3px 0 0 2px; }
+
+  .count {
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--primary);
+    color: #fff;
+    padding: 2px 5px;
+    border-radius: 20px;
+    line-height: 1.2;
+    min-width: 18px;
+    text-align: center;
+  }
+
+  .day-tags { display: flex; flex-wrap: wrap; gap: 3px; overflow: hidden; }
+
+  .day-tag {
+    font-size: 9px;
+    background: rgba(99,102,241,.12);
+    color: #4f46e5;
+    padding: 1px 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .day-more { font-size: 9px; color: var(--muted); padding: 1px 3px; }
+
+  /* ---------- 详情面板 ---------- */
+  .panel {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05),
+                0 10px 30px -10px rgba(15,23,42,.1);
+    position: sticky;
+    top: 24px;
+    max-height: calc(100vh - 48px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-head {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+  }
+
+  .panel-head h2 { font-size: 17px; font-weight: 700; }
+
+  .panel-head .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .panel-body {
+    overflow-y: auto;
+    flex: 1;
+    margin: -4px;
+    padding: 4px;
+  }
+
+  .panel-body::-webkit-scrollbar { width: 6px; }
+  .panel-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+  .empty-state {
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 40px 10px;
+    line-height: 1.8;
+  }
+
+  .msg {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-left: 3px solid var(--primary);
+  }
+
+  .msg.combined { border-left-color: var(--accent); background: #fffbeb; }
+
+  .msg-senders { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+
+  .sender {
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--primary);
+    color: #fff;
+    padding: 3px 9px;
+    border-radius: 20px;
+    word-break: break-all;
+  }
+
+  .msg.combined .sender { background: var(--accent); }
+
+  .msg-meta {
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .msg-meta .badge {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+
+  .error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.9;
+    margin-bottom: 16px;
+  }
+
+  .error code {
+    background: #fff;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  @media (max-width: 860px) {
+    main { grid-template-columns: 1fr; }
+    .panel { position: static; max-height: none; }
+    .day-tag { display: none; }
+    .day { aspect-ratio: auto; min-height: 56px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>消息日历<span class="sub">起始于 2025 年 7 月 14 日</span></h1>
+    <div class="nav">
+      <button id="prevBtn">‹ 上一月</button>
+      <div id="monthLabel">2025年7月</div>
+      <button id="nextBtn">下一月 ›</button>
+      <button id="resetBtn">回到开始</button>
+    </div>
+  </header>
+
+  <div id="errorBox"></div>
+
+  <main>
+    <div class="calendar">
+      <div class="weekdays">
+        <div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div>
+      </div>
+      <div class="days" id="days"></div>
+    </div>
+
+    <aside class="panel">
+      <div class="panel-head" id="panelHead">
+        <h2>消息详情</h2>
+        <div class="meta">点击日历中的日期查看</div>
+      </div>
+      <div class="panel-body" id="panelBody">
+        <div class="empty-state">
+          选择某一天<br>查看当天记录的消息
+        </div>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+/* ================= 配置 ================= */
+const START = { y: 2025, m: 6, d: 14 };            // 起始：2025-07-14（月从 0 开始）
+const START_DATE = new Date(START.y, START.m, START.d);
+
+/* ================= 状态 ================= */
+let data = [];
+let byDate = {};
+let currentYear = START.y;
+let currentMonth = START.m;
+let selectedDate = null;
+
+/* ================= 工具函数 ================= */
+const pad = n => String(n).padStart(2, '0');
+const dateKey = (y, m, d) => `${y}-${pad(m + 1)}-${pad(d)}`;
+
+function isBeforeStart(y, m, d) {
+  return new Date(y, m, d) < START_DATE;
+}
+
+function isToday(y, m, d) {
+  const now = new Date();
+  return now.getFullYear() === y && now.getMonth() === m && now.getDate() === d;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+/* ================= 加载数据 ================= */
+async function init() {
+  try {
+    const res = await fetch('es_history.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    data = await res.json();
+    if (!Array.isArray(data)) throw new Error('JSON 格式不是数组');
+  } catch (err) {
+    console.error(err);
+    showError(
+      '无法加载 <code>es_history.json</code>。<br>' +
+      '如果你直接双击打开 HTML 文件，浏览器会因安全策略阻止读取本地 JSON。<br>' +
+      '请在本目录下启动一个本地服务器，例如：<br>' +
+      '<code>python -m http.server 8000</code><br>' +
+      '然后访问 <code>http://localhost:8000/calendar.html</code>'
+    );
+    data = [];
+  }
+
+  buildIndex();
+  renderCalendar();
+}
+
+function showError(html) {
+  document.getElementById('errorBox').innerHTML =
+    `<div class="error">${html}</div>`;
+}
+
+/* ================= 建立日期索引 ================= */
+function buildIndex() {
+  byDate = {};
+  for (const item of data) {
+    if (!item || !item.time) continue;
+    const key = String(item.time).slice(0, 10); // 2026-10-03T00:00:00 -> 2026-10-03
+    if (!byDate[key]) byDate[key] = [];
+    byDate[key].push(item);
+  }
+}
+
+/* ================= 渲染日历 ================= */
+function renderCalendar() {
+  document.getElementById('monthLabel').textContent =
+    `${currentYear}年${currentMonth + 1}月`;
+
+  const daysEl = document.getElementById('days');
+  daysEl.innerHTML = '';
+
+  // 当月第一天是星期几（周一为 0）
+  const firstDay = new Date(currentYear, currentMonth, 1);
+  let offset = firstDay.getDay() - 1;
+  if (offset < 0) offset = 6;
+
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+  // 前置空格
+  for (let i = 0; i < offset; i++) {
+    const el = document.createElement('div');
+    el.className = 'day empty';
+    daysEl.appendChild(el);
+  }
+
+  // 每一天
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = dateKey(currentYear, currentMonth, d);
+    const items = byDate[key] || [];
+
+    const el = document.createElement('div');
+    el.className = 'day';
+    el.dataset.date = key;
+
+    const disabled = isBeforeStart(currentYear, currentMonth, d);
+    if (disabled) {
+      el.classList.add('disabled');
+    } else {
+      el.addEventListener('click', () => selectDate(key));
+    }
+
+    if (items.length > 0) el.classList.add('has-data');
+    if (isToday(currentYear, currentMonth, d)) el.classList.add('today');
+    if (selectedDate === key) el.classList.add('selected');
+
+    // 顶部：日期 + 数量
+    const head = document.createElement('div');
+    head.className = 'day-head';
+
+    const num = document.createElement('span');
+    num.className = 'day-num';
+    num.textContent = d;
+    head.appendChild(num);
+
+    if (items.length > 0) {
+      const count = document.createElement('span');
+      count.className = 'count';
+      count.textContent = items.length;
+      head.appendChild(count);
+    }
+    el.appendChild(head);
+
+    // 底部：发送者标签（最多 2 个，多的折叠）
+    if (items.length > 0) {
+      const uniqueSenders = [];
+      const seen = new Set();
+      for (const it of items) {
+        for (const s of (it.senders || [])) {
+          if (!seen.has(s)) { seen.add(s); uniqueSenders.push(s); }
+        }
+      }
+
+      const tags = document.createElement('div');
+      tags.className = 'day-tags';
+
+      const MAX = 2;
+      uniqueSenders.slice(0, MAX).forEach(s => {
+        const t = document.createElement('span');
+        t.className = 'day-tag';
+        t.textContent = s;
+        t.title = s;
+        tags.appendChild(t);
+      });
+
+      if (uniqueSenders.length > MAX) {
+        const more = document.createElement('span');
+        more.className = 'day-more';
+        more.textContent = `+${uniqueSenders.length - MAX}`;
+        tags.appendChild(more);
+      }
+      el.appendChild(tags);
+    }
+
+    daysEl.appendChild(el);
+  }
+
+  // 上一月按钮禁用状态
+  const atStart = currentYear === START.y && currentMonth === START.m;
+  document.getElementById('prevBtn').disabled = atStart;
+}
+
+/* ================= 选择日期 ================= */
+function selectDate(key) {
+  selectedDate = key;
+
+  document.querySelectorAll('.day.selected')
+    .forEach(el => el.classList.remove('selected'));
+
+  const el = document.querySelector(`.day[data-date="${key}"]`);
+  if (el) el.classList.add('selected');
+
+  renderPanel(key);
+}
+
+/* ================= 渲染详情面板 ================= */
+function renderPanel(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  const items = byDate[key] || [];
+
+  const head = document.getElementById('panelHead');
+  const body = document.getElementById('panelBody');
+
+  const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+  const wd = weekdays[new Date(y, m - 1, d).getDay()];
+
+  head.innerHTML = `
+    <h2>${y}年${m}月${d}日</h2>
+    <div class="meta">${wd} · 共 ${items.length} 条消息</div>
+  `;
+
+  if (items.length === 0) {
+    body.innerHTML = '<div class="empty-state">这一天没有消息记录</div>';
+    return;
+  }
+
+  body.innerHTML = items.map(it => {
+    const combined = it.is_combined === true;
+    const senders = (it.senders || [])
+      .map(s => `<span class="sender">${escapeHtml(s)}</span>`)
+      .join('');
+
+    return `
+      <div class="msg ${combined ? 'combined' : ''}">
+        <div class="msg-senders">
+          ${senders || '<span class="sender">未知</span>'}
+        </div>
+        <div class="msg-meta">
+          <span>记录者：${escapeHtml(it.recorder || '未知')}</span>
+          ${combined ? '<span class="badge">合订本</span>' : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ================= 导航按钮 ================= */
+document.getElementById('prevBtn').addEventListener('click', () => {
+  if (currentYear === START.y && currentMonth === START.m) return;
+  currentMonth--;
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  renderCalendar();
+});
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  currentMonth++;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  renderCalendar();
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  currentYear = START.y;
+  currentMonth = START.m;
+  selectedDate = null;
+  renderCalendar();
+  resetPanel();
+});
+
+function resetPanel() {
+  document.getElementById('panelHead').innerHTML = `
+    <h2>消息详情</h2>
+    <div class="meta">点击日历中的日期查看</div>
+  `;
+  document.getElementById('panelBody').innerHTML = `
+    <div class="empty-state">选择某一天<br>查看当天记录的消息</div>
+  `;
+}
+
+/* ================= 启动 ================= */
+init();
+</script>
+</body>
+</html>
