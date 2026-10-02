@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>发送者排名 · 消息日历</title>
+<style>
+  :root {
+    --bg: #f1f5f9;
+    --card: #ffffff;
+    --primary: #6366f1;
+    --primary-soft: #eef2ff;
+    --primary-border: #c7d2fe;
+    --text: #1e293b;
+    --muted: #94a3b8;
+    --border: #e2e8f0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px 16px 60px;
+    min-height: 100vh;
+  }
+
+  .app { max-width: 980px; margin: 0 auto; }
+
+  /* ---------- 头部 ---------- */
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  h1 { font-size: 22px; font-weight: 700; letter-spacing: .5px; }
+
+  h1 .sub {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0;
+  }
+
+  .back {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+    text-decoration: none;
+    background: var(--primary-soft);
+    border: 1px solid var(--primary-border);
+    padding: 8px 14px;
+    border-radius: 10px;
+    transition: all .15s;
+  }
+  .back:hover { background: #e0e7ff; }
+
+  /* ---------- 快照选择条 ---------- */
+  .snapshots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    background: var(--card);
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05),
+                0 10px 30px -14px rgba(15,23,42,.12);
+  }
+
+  .snap {
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    font-family: inherit;
+  }
+  .snap:hover { border-color: var(--primary); color: var(--primary); }
+  .snap.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    box-shadow: 0 4px 12px -4px rgba(99,102,241,.6);
+  }
+
+  /* ---------- 统计卡片 ---------- */
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .stat {
+    flex: 1 1 160px;
+    background: var(--card);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05),
+                0 10px 30px -14px rgba(15,23,42,.12);
+  }
+
+  .stat .label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: .3px;
+  }
+
+  .stat .value {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .stat .value.small { font-size: 16px; }
+
+  /* ---------- 图表 ---------- */
+  .chart {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 20px 20px 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05),
+                0 10px 30px -14px rgba(15,23,42,.12);
+  }
+
+  .row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 7px 0;
+  }
+
+  .rank {
+    width: 30px;
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--muted);
+    padding-top: 1px;
+    font-variant-numeric: tabular-nums;
+  }
+  .rank.top1 { color: #f59e0b; }
+  .rank.top2 { color: #94a3b8; }
+  .rank.top3 { color: #c2703d; }
+
+  .body { flex: 1; min-width: 0; }
+
+  .line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+
+  .name {
+    font-size: 13px;
+    font-weight: 600;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .delta {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 4px;
+    line-height: 1.6;
+    letter-spacing: .2px;
+  }
+  .delta.up   { color: #047857; background: #d1fae5; }
+  .delta.down { color: #b91c1c; background: #fee2e2; }
+  .delta.same { color: #94a3b8; background: #f1f5f9; }
+  .delta.new  { color: #6d28d9; background: #ede9fe; }
+
+  .count {
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+
+  .bar-track {
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .bar {
+    height: 100%;
+    width: 0;
+    border-radius: 4px;
+    transition: width .65s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  /* ---------- 状态 ---------- */
+  .empty-state {
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 60px 10px;
+    line-height: 1.9;
+  }
+
+  .error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.9;
+    margin-bottom: 16px;
+  }
+
+  .error code {
+    background: #fff;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  @media (max-width: 620px) {
+    .stat .value { font-size: 17px; }
+    .stat .value.small { font-size: 14px; }
+    .name { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <h1>
+      发送者排名
+      <span class="sub">合订本按每位发送者各计一次 · 快照起始于 2025-08-01</span>
+    </h1>
+    <a class="back" href="index.html">← 日历</a>
+    <a class="back" href="interesting_stat.html">趣味统计</a>
+  </header>
+
+  <div id="errorBox"></div>
+
+  <div class="snapshots" id="snapshots"></div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="chart" id="chart">
+    <div class="empty-state">加载中…</div>
+  </div>
+
+</div>
+
+<script>
+/* ================= 配置 ================= */
+const SNAPSHOT_START = '2025-08-01';
+
+/* ================= 状态 ================= */
+let records = [];
+let snapshotData = [];   // [{ date, list: [{name, count, rank}] }]
+let currentIndex = 0;
+
+/* ================= 工具函数 ================= */
+const pad = n => String(n).padStart(2, '0');
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+/** 稳定哈希取色，同一个人颜色不变 */
+function colorFor(name) {
+  let h = 5381;
+  for (let i = 0; i < name.length; i++) {
+    h = ((h << 5) + h + name.charCodeAt(i)) >>> 0;
+  }
+  const hue = h % 360;
+  return `hsl(${hue}, 68%, 55%)`;
+}
+
+/** 兼容 senders 数组与旧 sender 字段 */
+function getSenders(r) {
+  if (Array.isArray(r.senders) && r.senders.length) return r.senders;
+  if (typeof r.sender === 'string' && r.sender) return [r.sender];
+  return [];
+}
+
+/* ================= 初始化 ================= */
+async function init() {
+  try {
+    const res = await fetch('es_history.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const raw = await res.json();
+    if (!Array.isArray(raw)) throw new Error('JSON 格式不是数组');
+    records = raw.filter(r => r && r.time);
+  } catch (err) {
+    console.error(err);
+    showError(
+      '无法加载 <code>es_history.json</code>。<br>' +
+      '如果你直接双击打开 HTML 文件，浏览器会因安全策略阻止读取本地 JSON。<br>' +
+      '请在本目录下启动一个本地服务器，例如：<br>' +
+      '<code>python -m http.server 8000</code><br>' +
+      '然后访问 <code>http://localhost:8000/ranking.html</code>'
+    );
+    document.getElementById('chart').innerHTML =
+      '<div class="empty-state">暂无数据</div>';
+    return;
+  }
+
+  // 按时间升序，方便按日期切片
+  records.sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0));
+
+  buildSnapshots();
+  renderSnapshotChips();
+
+  if (snapshotData.length) {
+    selectSnapshot(snapshotData.length - 1);  // 默认展示最新快照
+  } else {
+    document.getElementById('chart').innerHTML =
+      '<div class="empty-state">没有可用的数据</div>';
+  }
+}
+
+function showError(html) {
+  document.getElementById('errorBox').innerHTML =
+    `<div class="error">${html}</div>`;
+}
+
+/* ================= 快照构建 ================= */
+function buildSnapshots() {
+  if (!records.length) { snapshotData = []; return; }
+
+  let lastDate = '';
+  for (const r of records) {
+    const d = r.time.slice(0, 10);
+    if (d > lastDate) lastDate = d;
+  }
+  if (!lastDate) { snapshotData = []; return; }
+
+  const dates = [];
+  let [y, m] = SNAPSHOT_START.split('-').map(Number);
+
+  while (true) {
+    const key = `${y}-${pad(m)}-01`;
+    if (key > lastDate) break;
+    dates.push(key);
+    m++;
+    if (m > 12) { m = 1; y++; }
+  }
+
+  // 补上数据最新日期（若与最后一个 1 号不同）
+  if (!dates.length || dates[dates.length - 1] !== lastDate) {
+    dates.push(lastDate);
+  }
+
+  snapshotData = dates.map(date => ({
+    date,
+    list: rankUpTo(date)
+  }));
+}
+
+/** 统计「截止到 endDate（含）」的累计发送次数排名 */
+function rankUpTo(endDate) {
+  const counts = Object.create(null);
+
+  for (const r of records) {
+    const d = r.time.slice(0, 10);
+    if (d > endDate) continue;
+    for (const s of getSenders(r)) {
+      counts[s] = (counts[s] || 0) + 1;
+    }
+  }
+
+  return Object.entries(counts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) =>
+      b.count - a.count ||
+      a.name.localeCompare(b.name, 'zh-Hans-CN')
+    )
+    .map((item, i) => ({ name: item.name, count: item.count, rank: i + 1 }));
+}
+
+/* ================= 快照选择条 ================= */
+function renderSnapshotChips() {
+  const el = document.getElementById('snapshots');
+
+  if (!snapshotData.length) {
+    el.style.display = 'none';
+    return;
+  }
+
+  el.innerHTML = snapshotData.map((s, i) => {
+    const [y, m, d] = s.date.split('-');
+    const label = d === '01' ? `${y}.${m}` : `${y}.${m}.${d}`;
+    return `<button class="snap" data-index="${i}" title="截至 ${s.date}">${label}</button>`;
+  }).join('');
+
+  el.querySelectorAll('.snap').forEach(btn => {
+    btn.addEventListener('click', () => selectSnapshot(Number(btn.dataset.index)));
+  });
+}
+
+function selectSnapshot(i) {
+  if (i < 0 || i >= snapshotData.length) return;
+  currentIndex = i;
+
+  document.querySelectorAll('.snap').forEach((b, idx) => {
+    b.classList.toggle('active', idx === i);
+  });
+
+  renderChart();
+}
+
+/* ================= 渲染图表 ================= */
+function renderChart() {
+  const chartEl = document.getElementById('chart');
+  const statsEl = document.getElementById('stats');
+
+  const cur = snapshotData[currentIndex];
+  const prev = currentIndex > 0 ? snapshotData[currentIndex - 1] : null;
+
+  const list = cur.list;
+  const max = list.length ? list[0].count : 1;
+
+  /* ---- 统计卡片 ---- */
+  const totalCount = list.reduce((a, b) => a + b.count, 0);
+  statsEl.innerHTML = `
+    <div class="stat">
+      <div class="label">发送者人数</div>
+      <div class="value">${list.length}</div>
+    </div>
+    <div class="stat">
+      <div class="label">累计发送次数</div>
+      <div class="value">${totalCount}</div>
+    </div>
+    <div class="stat">
+      <div class="label">当前第一名</div>
+      <div class="value small">${list.length ? escapeHtml(list[0].name) : '—'}</div>
+    </div>
+    <div class="stat">
+      <div class="label">统计截止</div>
+      <div class="value small">${cur.date}</div>
+    </div>
+  `;
+
+  if (!list.length) {
+    chartEl.innerHTML = '<div class="empty-state">该日期前没有任何消息记录</div>';
+    return;
+  }
+
+  /* ---- 上一期排名表 ---- */
+  const prevRank = Object.create(null);
+  if (prev) prev.list.forEach(x => { prevRank[x.name] = x.rank; });
+
+  /* ---- 条形图 ---- */
+  chartEl.innerHTML = list.map(item => {
+    const pct = (item.count / max) * 100;
+    const color = colorFor(item.name);
+    const rankCls = item.rank <= 3 ? ` top${item.rank}` : '';
+
+    let delta;
+    if (!prev) {
+      delta = '<span class="delta same">–</span>';
+    } else {
+      const p = prevRank[item.name];
+      if (p === undefined) {
+        delta = '<span class="delta new">NEW</span>';
+      } else if (p > item.rank) {
+        delta = `<span class="delta up">▲${p - item.rank}</span>`;
+      } else if (p < item.rank) {
+        delta = `<span class="delta down">▼${item.rank - p}</span>`;
+      } else {
+        delta = '<span class="delta same">–</span>';
+      }
+    }
+
+    return `
+      <div class="row">
+        <div class="rank${rankCls}">${item.rank}</div>
+        <div class="body">
+          <div class="line">
+            <span class="name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
+            ${delta}
+            <span class="count">${item.count}</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar" data-width="${pct}" style="background:${color}"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  /* ---- 条形宽度动画 ---- */
+  requestAnimationFrame(() => {
+    chartEl.querySelectorAll('.bar').forEach(el => {
+      el.style.width = el.dataset.width + '%';
+    });
+  });
+}
+
+/* ================= 启动 ================= */
+init();
+</script>
+</body>
+</html>

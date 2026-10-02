@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>数据统计 · 消息日历</title>
+<style>
+  :root {
+    --bg: #f1f5f9;
+    --card: #ffffff;
+    --primary: #6366f1;
+    --primary-soft: #eef2ff;
+    --primary-border: #c7d2fe;
+    --text: #1e293b;
+    --muted: #94a3b8;
+    --border: #e2e8f0;
+    --gold: #f59e0b;
+    --silver: #94a3b8;
+    --bronze: #c2703d;
+    --green: #047857;
+    --red: #b91c1c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px 16px 60px;
+    min-height: 100vh;
+  }
+
+  .app { max-width: 1000px; margin: 0 auto; }
+
+  /* ---------- 头部 ---------- */
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  h1 { font-size: 22px; font-weight: 700; letter-spacing: .5px; }
+  h1 .sub {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0;
+  }
+
+  .nav-links { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .back {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+    text-decoration: none;
+    background: var(--primary-soft);
+    border: 1px solid var(--primary-border);
+    padding: 8px 14px;
+    border-radius: 10px;
+    transition: all .15s;
+  }
+  .back:hover { background: #e0e7ff; }
+
+  /* ---------- 总览 ---------- */
+  .overview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .ov {
+    flex: 1 1 140px;
+    background: var(--card);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05),
+                0 10px 30px -14px rgba(15,23,42,.12);
+  }
+
+  .ov .label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: .3px;
+  }
+  .ov .value { font-size: 20px; font-weight: 700; }
+
+  /* ---------- 区块 ---------- */
+  .section {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05),
+                0 10px 30px -14px rgba(15,23,42,.12);
+  }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-head h2 {
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-head h2 .idx {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .section-head .hint {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* ---------- 冠军展示 ---------- */
+  .champion {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 1px solid #fde68a;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+
+  .champion .medal { font-size: 26px; line-height: 1; flex-shrink: 0; }
+
+  .champion .info { min-width: 0; flex: 1; }
+
+  .champion .title {
+    font-size: 16px;
+    font-weight: 800;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .champion .desc {
+    font-size: 12px;
+    color: #92400e;
+    margin-top: 3px;
+  }
+
+  .champion .num {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--gold);
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .champion .num small { font-size: 12px; font-weight: 600; }
+
+  /* ---------- 排行榜 ---------- */
+  .board { display: flex; flex-direction: column; gap: 2px; }
+
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    transition: background .15s;
+  }
+  .item:hover { background: #f8fafc; }
+
+  .item .rk {
+    width: 26px;
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .item:nth-child(1) .rk { color: var(--gold); }
+  .item:nth-child(2) .rk { color: var(--silver); }
+  .item:nth-child(3) .rk { color: var(--bronze); }
+
+  .item .who {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .item .who .arrow {
+    color: var(--primary);
+    font-weight: 800;
+    margin: 0 5px;
+  }
+  .item .who .extra {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-left: 6px;
+  }
+
+  .item .val {
+    flex-shrink: 0;
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+  .item .val small { font-size: 10px; font-weight: 600; color: var(--muted); margin-left: 2px; }
+
+  .item .mini-bar {
+    width: 70px;
+    height: 6px;
+    background: #f1f5f9;
+    border-radius: 3px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .item .mini-bar > i {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    transition: width .5s ease;
+  }
+
+  /* ---------- 状态 ---------- */
+  .empty-state {
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 50px 10px;
+    line-height: 1.9;
+  }
+
+  .error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.9;
+    margin-bottom: 16px;
+  }
+  .error code {
+    background: #fff;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  @media (max-width: 620px) {
+    .item .mini-bar { display: none; }
+    .champion .title { font-size: 14px; }
+    .champion .num { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <h1>
+      趣味统计
+      <span class="sub">合订本按每位发送者各计一次 · 记录关系含自我记录</span>
+    </h1>
+    <div class="nav-links">
+      <a class="back" href="index.html">← 日历</a>
+      <a class="back" href="sender_rank.html">发送者排名</a>
+    </div>
+  </header>
+
+  <div id="errorBox"></div>
+
+  <div class="overview" id="overview"></div>
+
+  <div id="sections"></div>
+
+</div>
+
+<script>
+/* ================= 工具函数 ================= */
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+/** 兼容 senders 数组与旧 sender 字段；去重且保持顺序 */
+function getSenders(r) {
+  let list = [];
+  if (Array.isArray(r.senders) && r.senders.length) list = r.senders.slice();
+  else if (typeof r.sender === 'string' && r.sender) list = [r.sender];
+
+  const seen = new Set();
+  const out = [];
+  for (const s of list) {
+    const v = String(s).trim();
+    if (v && !seen.has(v)) { seen.add(v); out.push(v); }
+  }
+  return out;
+}
+
+/** 稳定哈希取色，同一个人颜色不变 */
+function colorFor(name) {
+  let h = 5381;
+  for (let i = 0; i < name.length; i++) {
+    h = ((h << 5) + h + name.charCodeAt(i)) >>> 0;
+  }
+  return `hsl(${h % 360}, 68%, 55%)`;
+}
+
+/** 把 {key: count} 转成按 count 降序的数组 */
+function toRanked(obj, tieBreak) {
+  return Object.entries(obj)
+    .map(([key, count]) => ({ key, count }))
+    .sort((a, b) =>
+      b.count - a.count ||
+      (tieBreak ? tieBreak(a.key, b.key) : a.key.localeCompare(b.key, 'zh-Hans-CN'))
+    );
+}
+
+/* ================= 初始化 ================= */
+async function init() {
+  let records;
+  try {
+    const res = await fetch('es_history.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const raw = await res.json();
+    if (!Array.isArray(raw)) throw new Error('JSON 格式不是数组');
+    records = raw.filter(r => r && r.time);
+  } catch (err) {
+    console.error(err);
+    showError(
+      '无法加载 <code>es_history.json</code>。<br>' +
+      '如果你直接双击打开 HTML 文件，浏览器会因安全策略阻止读取本地 JSON。<br>' +
+      '请在本目录下启动一个本地服务器，例如：<br>' +
+      '<code>python -m http.server 8000</code><br>' +
+      '然后访问 <code>http://localhost:8000/stats.html</code>'
+    );
+    document.getElementById('sections').innerHTML =
+      '<div class="section"><div class="empty-state">暂无数据</div></div>';
+    return;
+  }
+
+  const result = analyze(records);
+  renderOverview(result.overview);
+  renderSections(result);
+}
+
+function showError(html) {
+  document.getElementById('errorBox').innerHTML =
+    `<div class="error">${html}</div>`;
+}
+
+/* ================= 核心统计 ================= */
+function analyze(records) {
+  /* ---------- 基础容器 ---------- */
+  const combinedSenderCount = {};   // 1. 合订本出场次数
+  const dayCount            = {};   // 2. 每天消息条数
+  const monthSenderCount    = {};   // 3. 每人每月被记录次数
+  const recorderCount       = {};   // 4. 记录者次数
+  const pairCount           = {};   // 5. 合订本内两人组合
+  const relationCount       = {};   // 6. A 记录 B 的次数
+
+  let combinedCount = 0;            // 合订本条目数
+  let senderTouches = 0;            // 发送人次（合订本展开）
+
+  for (const r of records) {
+    const senders = getSenders(r);
+    const recorder = r.recorder || '（未知）';
+    const day  = r.time.slice(0, 10);
+    const month = r.time.slice(0, 7);
+    const isCombined = r.is_combined === true;
+
+    /* --- 2. 每天条数 --- */
+    dayCount[day] = (dayCount[day] || 0) + 1;
+
+    /* --- 4. 记录者 --- */
+    recorderCount[recorder] = (recorderCount[recorder] || 0) + 1;
+
+    /* --- 3 & 6. 逐发送者 --- */
+    for (const s of senders) {
+      senderTouches++;
+
+      const mKey = `${s}|${month}`;
+      monthSenderCount[mKey] = (monthSenderCount[mKey] || 0) + 1;
+
+      const rKey = `${recorder}|${s}`;
+      relationCount[rKey] = (relationCount[rKey] || 0) + 1;
+    }
+
+    /* --- 1 & 5. 合订本 --- */
+    if (isCombined && senders.length > 1) {
+      combinedCount++;
+
+      for (const s of senders) {
+        combinedSenderCount[s] = (combinedSenderCount[s] || 0) + 1;
+      }
+
+      // 所有 2 人组合
+      for (let i = 0; i < senders.length; i++) {
+        for (let j = i + 1; j < senders.length; j++) {
+          const a = senders[i], b = senders[j];
+          const key = a < b ? `${a}|${b}` : `${b}|${a}`;
+          pairCount[key] = (pairCount[key] || 0) + 1;
+        }
+      }
+    }
+  }
+
+  /* ---------- 1. 合订本出场王 ---------- */
+  const combinedRanking = toRanked(combinedSenderCount);
+
+  /* ---------- 2. 单日消息最多的一天 ---------- */
+  const dayRanking = toRanked(dayCount, (a, b) => b.localeCompare(a));
+
+  /* ---------- 3. 单月个人纪录 ---------- */
+  // monthSenderCount 的 key 形如 "名字|2026-10"
+  const monthSenderRanking = toRanked(monthSenderCount).map(({ key, count }) => {
+    const idx = key.lastIndexOf('|');
+    return { name: key.slice(0, idx), month: key.slice(idx + 1), count };
+  });
+
+  // 每人自己的最高月份
+  const bestPerPerson = {};
+  for (const item of monthSenderRanking) {
+    if (!bestPerPerson[item.name]) bestPerPerson[item.name] = item;
+  }
+  const personalBest = Object.values(bestPerPerson)
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'zh-Hans-CN'));
+
+  /* ---------- 4. 记录者排行 ---------- */
+  const recorderRanking = toRanked(recorderCount);
+
+  /* ---------- 5. 最佳拍档（合订本同框） ---------- */
+  const pairRanking = toRanked(pairCount).map(({ key, count }) => {
+    const [a, b] = key.split('|');
+    return { a, b, count };
+  });
+
+  /* ---------- 6. 记录关系之王 ---------- */
+  const relationRanking = toRanked(relationCount).map(({ key, count }) => {
+    const idx = key.indexOf('|');
+    return { a: key.slice(0, idx), b: key.slice(idx + 1), count };
+  });
+
+  return {
+    overview: {
+      totalRecords: records.length,
+      totalSenders: Object.keys(
+        records.reduce((acc, r) => {
+          getSenders(r).forEach(s => acc[s] = 1);
+          return acc;
+        }, {})
+      ).length,
+      combinedCount,
+      senderTouches,
+      recorderCount: Object.keys(recorderCount).length
+    },
+    combinedRanking,
+    dayRanking,
+    personalBest,
+    monthSenderRanking,
+    recorderRanking,
+    pairRanking,
+    relationRanking
+  };
+}
+
+/* ================= 渲染：总览 ================= */
+function renderOverview(o) {
+  document.getElementById('overview').innerHTML = `
+    <div class="ov">
+      <div class="label">消息总条数</div>
+      <div class="value">${o.totalRecords}</div>
+    </div>
+    <div class="ov">
+      <div class="label">参与发送者</div>
+      <div class="value">${o.totalSenders}</div>
+    </div>
+    <div class="ov">
+      <div class="label">发送人次</div>
+      <div class="value">${o.senderTouches}</div>
+    </div>
+    <div class="ov">
+      <div class="label">合订本条目</div>
+      <div class="value">${o.combinedCount}</div>
+    </div>
+    <div class="ov">
+      <div class="label">记录者人数</div>
+      <div class="value">${o.recorderCount}</div>
+    </div>
+  `;
+}
+
+/* ================= 渲染：小工具 ================= */
+function sectionHTML(idx, title, hint, body) {
+  return `
+    <section class="section">
+      <div class="section-head">
+        <h2><span class="idx">${idx}</span>${title}</h2>
+        ${hint ? `<div class="hint">${hint}</div>` : ''}
+      </div>
+      ${body}
+    </section>
+  `;
+}
+
+function championHTML(medal, title, desc, num, unit) {
+  return `
+    <div class="champion">
+      <div class="medal">${medal}</div>
+      <div class="info">
+        <div class="title">${escapeHtml(title)}</div>
+        <div class="desc">${desc}</div>
+      </div>
+      <div class="num">${num}<small>${unit}</small></div>
+    </div>
+  `;
+}
+
+function listHTML(items, renderItem) {
+  if (!items.length) {
+    return '<div class="empty-state">没有可统计的数据</div>';
+  }
+  return `<div class="board">${items.map(renderItem).join('')}</div>`;
+}
+
+function miniBar(pct, color) {
+  return `<div class="mini-bar"><i style="width:${pct}%;background:${color}"></i></div>`;
+}
+
+/* ================= 渲染：六大区块 ================= */
+function renderSections(d) {
+  const sections = [];
+
+  /* ---------- 1. 合订本出场王 ---------- */
+  {
+    const top = d.combinedRanking[0];
+    const max = top ? top.count : 1;
+    const body = top
+      ? championHTML(
+          '🤝',
+          top.key,
+          '出现在合订本中的次数最多',
+          top.count,
+          ' 次'
+        ) +
+        listHTML(d.combinedRanking.slice(0, 10), (it, i) => `
+          <div class="item">
+            <div class="rk">${i + 1}</div>
+            <div class="who">${escapeHtml(it.key)}</div>
+            ${miniBar((it.count / max) * 100, colorFor(it.key))}
+            <div class="val">${it.count}<small>次</small></div>
+          </div>
+        `)
+      : '<div class="empty-state">没有合订本记录</div>';
+
+    sections.push(sectionHTML(1, '每回扫黄都有你', '仅统计合订本条目', body));
+  }
+
+  /* ---------- 2. 单日消息最多的一天 ---------- */
+  {
+    const top = d.dayRanking[0];
+    const max = top ? top.count : 1;
+    const body = top
+      ? championHTML(
+          '📅',
+          top.key,
+          '这一天爆出的典最多',
+          top.count,
+          ' 条'
+        ) +
+        listHTML(d.dayRanking.slice(0, 8), (it, i) => `
+          <div class="item">
+            <div class="rk">${i + 1}</div>
+            <div class="who">${escapeHtml(it.key)}</div>
+            ${miniBar((it.count / max) * 100, colorFor(it.key))}
+            <div class="val">${it.count}<small>条</small></div>
+          </div>
+        `)
+      : '<div class="empty-state">没有可统计的数据</div>';
+
+    sections.push(sectionHTML(2, '最闹麻的一天', '按消息条数统计，与发送人数无关', body));
+  }
+
+  /* ---------- 3. 单月个人纪录 ---------- */
+  {
+    const top = d.personalBest[0];
+    const max = top ? top.count : 1;
+    const body = top
+      ? championHTML(
+          '🏆',
+          top.name,
+          `在 <b>${top.month}</b> 单月爆典最多`,
+          top.count,
+          ' 次'
+        ) +
+        listHTML(d.personalBest.slice(0, 10), (it, i) => `
+          <div class="item">
+            <div class="rk">${i + 1}</div>
+            <div class="who">
+              ${escapeHtml(it.name)}
+              <span class="extra">${it.month}</span>
+            </div>
+            ${miniBar((it.count / max) * 100, colorFor(it.name))}
+            <div class="val">${it.count}<small>次</small></div>
+          </div>
+        `)
+      : '<div class="empty-state">没有可统计的数据</div>';
+
+    sections.push(sectionHTML(3, '单月个人纪录', '每位群友的历史最多月份', body));
+  }
+
+  /* ---------- 4. 记录者排行 ---------- */
+  {
+    const top = d.recorderRanking[0];
+    const max = top ? top.count : 1;
+    const body = top
+      ? championHTML(
+          '📝',
+          top.key,
+          '群第一史官',
+          top.count,
+          ' 条'
+        ) +
+        listHTML(d.recorderRanking.slice(0, 10), (it, i) => `
+          <div class="item">
+            <div class="rk">${i + 1}</div>
+            <div class="who">${escapeHtml(it.key)}</div>
+            ${miniBar((it.count / max) * 100, colorFor(it.key))}
+            <div class="val">${it.count}<small>条</small></div>
+          </div>
+        `)
+      : '<div class="empty-state">没有可统计的数据</div>';
+
+    sections.push(sectionHTML(4, '设精最多', '按某人设置精华数统计，图片合订本统计为图片发送者', body));
+  }
+
+  /* ---------- 5. 最佳拍档 ---------- */
+  {
+    const top = d.pairRanking[0];
+    const max = top ? top.count : 1;
+    const body = top
+      ? championHTML(
+          '💞',
+          `${top.a} + ${top.b}`,
+          '最常出现在同一个合订本中',
+          top.count,
+          ' 次'
+        ) +
+        listHTML(d.pairRanking.slice(0, 10), (it, i) => `
+          <div class="item">
+            <div class="rk">${i + 1}</div>
+            <div class="who">
+              ${escapeHtml(it.a)}
+              <span class="arrow">+</span>
+              ${escapeHtml(it.b)}
+            </div>
+            ${miniBar((it.count / max) * 100, colorFor(it.a + it.b))}
+            <div class="val">${it.count}<small>次</small></div>
+          </div>
+        `)
+      : '<div class="empty-state">没有合订本记录</div>';
+
+    sections.push(sectionHTML(
+      5, '最强炒作组',
+      '一个合订本内所有 2 人组合各计一次',
+      body
+    ));
+  }
+
+  /* ---------- 6. 记录关系之王 ---------- */
+  {
+    const top = d.relationRanking[0];
+    const max = top ? top.count : 1;
+    const body = top
+      ? championHTML(
+          '👑',
+          `${top.a} → ${top.b}`,
+          `${top.a} 记下 ${top.b} 的典最多`,
+          top.count,
+          ' 次'
+        ) +
+        listHTML(d.relationRanking.slice(0, 12), (it, i) => `
+          <div class="item">
+            <div class="rk">${i + 1}</div>
+            <div class="who">
+              ${escapeHtml(it.a)}
+              <span class="arrow">→</span>
+              ${escapeHtml(it.b)}
+              ${it.a === it.b ? '<span class="extra">自己记自己</span>' : ''}
+            </div>
+            ${miniBar((it.count / max) * 100, colorFor(it.a + '→' + it.b))}
+            <div class="val">${it.count}<small>次</small></div>
+          </div>
+        `)
+      : '<div class="empty-state">没有可统计的数据</div>';
+
+    sections.push(sectionHTML(
+      6, '我一直在看着你',
+      'A 记录 B 的次数；B 出现在合订本中同样计入，A 可为 B 本人',
+      body
+    ));
+  }
+
+  document.getElementById('sections').innerHTML = sections.join('');
+}
+
+/* ================= 启动 ================= */
+init();
+</script>
+</body>
+</html>

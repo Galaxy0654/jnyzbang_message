@@ -52,7 +52,8 @@
 
   .nav { display: flex; align-items: center; gap: 8px; }
 
-  .nav button {
+  .nav button,
+  .nav .nav-link {
     border: 1px solid var(--border);
     background: var(--card);
     color: var(--text);
@@ -61,14 +62,45 @@
     font-size: 14px;
     cursor: pointer;
     transition: all .15s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+    font-family: inherit;
   }
 
-  .nav button:hover:not(:disabled) {
+  .nav button:hover:not(:disabled),
+  .nav .nav-link:hover {
     border-color: var(--primary);
     color: var(--primary);
   }
 
   .nav button:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* 页面跳转链接稍微突出一点 */
+  .nav .nav-link {
+    color: var(--primary);
+    background: var(--primary-soft);
+    border-color: var(--primary-border);
+  }
+  .nav .nav-link:hover { background: #e0e7ff; }
+
+  /* 两组导航之间的竖线分隔 */
+  .nav .divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+    margin: 0 2px;
+  }
+
+  /* 头部右侧整体布局，窄屏自动换行 */
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
 
   #monthLabel {
     font-size: 16px;
@@ -322,12 +354,18 @@
 <body>
 <div class="app">
   <header>
-    <h1>消息日历<span class="sub">起始于 2025 年 7 月 14 日</span></h1>
-    <div class="nav">
-      <button id="prevBtn">‹ 上一月</button>
-      <div id="monthLabel">2025年7月</div>
-      <button id="nextBtn">下一月 ›</button>
-      <button id="resetBtn">回到开始</button>
+    <h1>消息日历<span class="sub">济宁一中邦多利同好会，始于公元2025年7月14日。</span></h1>
+    <div class="header-actions">
+      <div class="nav">
+        <a class="nav-link" href="sender_rank.html">发送者排名</a>
+        <a class="nav-link" href="interesting_stat.html">趣味统计</a>
+      </div>
+      <div class="nav">
+        <button id="prevBtn">‹ 上一月</button>
+        <div id="monthLabel">2025年7月</div>
+        <button id="nextBtn">下一月 ›</button>
+        <button id="resetBtn">回到开始</button>
+      </div>
     </div>
   </header>
 
