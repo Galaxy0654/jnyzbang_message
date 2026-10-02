@@ -19,6 +19,19 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
+  #bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 120px);
+    grid-auto-rows: 120px;
+  }
+  #bg div {
+    background-size: cover;
+    opacity: 0.2;
+  }
+  
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
                  "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
@@ -353,6 +366,8 @@
 </head>
 <body>
 <div class="app">
+  <div id="bg"></div>
+
   <header>
     <h1>消息日历<span class="sub">济宁一中邦多利同好会，始于公元2025年7月14日。</span></h1>
     <div class="header-actions">
@@ -395,6 +410,19 @@
 </div>
 
 <script>
+const imgs = ['bg_image/ag.png', 'bg_image/hhw.png', 'bg_image/monica.png', 'bg_image/mt.png', 'bg_image/mujica.png',
+  'bg_image/mygo.png', 'bg_image/pp.png', 'bg_image/ppp.png', 'bg_image/ras.png', 'bg_image/roselia.png'
+];
+const bg = document.getElementById('bg');
+const cols = Math.ceil(window.innerWidth / 120);
+const rows = Math.ceil(window.innerHeight / 120);
+
+for (let i = 0; i < cols * rows; i++) {
+  const d = document.createElement('div');
+  d.style.backgroundImage = `url(${imgs[Math.floor(Math.random() * imgs.length)]})`;
+  bg.appendChild(d);
+}
+
 /* ================= 配置 ================= */
 const START = { y: 2025, m: 6, d: 14 };            // 起始：2025-07-14（月从 0 开始）
 const START_DATE = new Date(START.y, START.m, START.d);
