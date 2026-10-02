@@ -364,6 +364,7 @@
         <button id="prevBtn">‹ 上一月</button>
         <div id="monthLabel">2025年7月</div>
         <button id="nextBtn">下一月 ›</button>
+        <button id="todayBtn" class="primary">本月</button>
         <button id="resetBtn">回到开始</button>
       </div>
     </div>
@@ -397,6 +398,9 @@
 /* ================= 配置 ================= */
 const START = { y: 2025, m: 6, d: 14 };            // 起始：2025-07-14（月从 0 开始）
 const START_DATE = new Date(START.y, START.m, START.d);
+const TODAY = new Date();
+const TODAY_Y = TODAY.getFullYear();
+const TODAY_M = TODAY.getMonth();   // 月从 0 开始
 
 /* ================= 状态 ================= */
 let data = [];
@@ -558,7 +562,10 @@ function renderCalendar() {
 
   // 上一月按钮禁用状态
   const atStart = currentYear === START.y && currentMonth === START.m;
+  const atNow = currentYear === TODAY_Y && currentMonth === TODAY_M;
+
   document.getElementById('prevBtn').disabled = atStart;
+  document.getElementById('nextBtn').disabled = atNow;
 }
 
 /* ================= 选择日期 ================= */
@@ -624,6 +631,7 @@ document.getElementById('prevBtn').addEventListener('click', () => {
 });
 
 document.getElementById('nextBtn').addEventListener('click', () => {
+  if (currentYear === TODAY_Y && currentMonth === TODAY_M) return;
   currentMonth++;
   if (currentMonth > 11) { currentMonth = 0; currentYear++; }
   renderCalendar();
@@ -635,6 +643,21 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   selectedDate = null;
   renderCalendar();
   resetPanel();
+});
+
+document.getElementById('todayBtn').addEventListener('click', () => {
+  currentYear = TODAY_Y;
+  currentMonth = TODAY_M;
+  renderCalendar();
+
+  // 如果今天有消息，自动选中并展示
+  const todayKey = dateKey(TODAY_Y, TODAY_M, TODAY.getDate());
+  if (byDate[todayKey]) {
+    selectDate(todayKey);
+  } else {
+    selectedDate = null;
+    resetPanel();
+  }
 });
 
 function resetPanel() {
