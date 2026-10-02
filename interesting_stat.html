@@ -571,7 +571,7 @@ function renderSections(d) {
     const max = top ? top.count : 1;
     const body = top
       ? championHTML(
-          '🤝',
+          '🤡',
           top.key,
           '出现在合订本中的次数最多',
           top.count,
@@ -587,7 +587,7 @@ function renderSections(d) {
         `)
       : '<div class="empty-state">没有合订本记录</div>';
 
-    sections.push(sectionHTML(1, '每回扫黄都有你', '仅统计合订本条目', body));
+    sections.push(sectionHTML(1, '每回扫黄都有你', '仅统计合订本', body));
   }
 
   /* ---------- 2. 单日消息最多的一天 ---------- */
@@ -640,7 +640,7 @@ function renderSections(d) {
         `)
       : '<div class="empty-state">没有可统计的数据</div>';
 
-    sections.push(sectionHTML(3, '单月个人纪录', '每位群友的历史最多月份', body));
+    sections.push(sectionHTML(3, '单月个人纪录', '每位群友的历史最多精华发言月份', body));
   }
 
   /* ---------- 4. 记录者排行 ---------- */
@@ -665,7 +665,7 @@ function renderSections(d) {
         `)
       : '<div class="empty-state">没有可统计的数据</div>';
 
-    sections.push(sectionHTML(4, '设精最多', '按某人设置精华数统计，图片合订本统计为图片发送者', body));
+    sections.push(sectionHTML(4, '疯狂设精', '按某人设置精华数统计，图片合订本统计为图片发送者', body));
   }
 
   /* ---------- 5. 最佳拍档 ---------- */
@@ -707,7 +707,7 @@ function renderSections(d) {
     const max = top ? top.count : 1;
     const body = top
       ? championHTML(
-          '👑',
+          '👀',
           `${top.a} → ${top.b}`,
           `${top.a} 记下 ${top.b} 的典最多`,
           top.count,
